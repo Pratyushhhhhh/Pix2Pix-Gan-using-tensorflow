@@ -1,0 +1,60 @@
+import kagglehub
+
+# Download latest version
+path = kagglehub.dataset_download("ktaebum/anime-sketch-colorization-pair")
+
+print("Path to dataset files:", path)
+
+# Convert path to a pathlib Path object
+path = pathlib.Path(path)
+
+# Inspect the structure of the dataset
+print("Directory contents:", list(path.iterdir()))
+
+# Adjust paths based on the dataset structure
+data_path = path / 'data'  # Assuming 'data' is the parent directory
+train_path = data_path / 'train'
+val_path = data_path / 'val'
+
+# List the files in the training directory
+if train_path.exists():
+    train_files = list(train_path.iterdir())
+    print(f"Number of training images: {len(train_files)}")
+    print(f"First training file: {train_files[0]}")
+
+    # Load and decode a sample image
+    sample_image_path = train_files[0]
+    sample_image = tf.io.read_file(str(sample_image_path))
+    sample_image = tf.io.decode_jpeg(sample_image)
+    print(f"Sample image shape: {sample_image.shape}")
+
+    # Display the sample image
+    plt.figure()
+    plt.imshow(sample_image)
+    plt.axis('off')
+    plt.title("Sample Training Image")
+    plt.show()
+else:
+    print(f"Training directory not found at {train_path}. Please verify the dataset structure.")
+
+def load(image_file):
+    """
+    Loads an image file and separates it into two tensors:
+    - input_image: Real building facade
+    - real_image: Architecture label
+    """
+    # Read and decode the image file
+    image = tf.io.read_file(image_file)
+    image = tf.io.decode_jpeg(image)
+
+    # Split the image into two halves
+    w = tf.shape(image)[1]  # Get the width of the image
+    w = w // 2  # Half the width
+    input_image = image[:, w:, :]  # Right half for the input image
+    real_image = image[:, :w, :]  # Left half for the real image
+
+    # Convert images to float32
+    input_image = tf.cast(input_image, tf.float32)
+    real_image = tf.cast(real_image, tf.float32)
+
+    return input_image, real_image
